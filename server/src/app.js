@@ -1,0 +1,15 @@
+import express from 'express';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import authRoutes from './routes/auth.js';
+import readingRoutes from './routes/readings.js';
+import reportRoutes from './routes/reports.js';
+import { auth } from './middleware/auth.js';
+export const app = express();
+app.use(cors({origin:process.env.CLIENT_ORIGIN || 'http://localhost:5173'}));
+app.use(express.json({limit:'20kb'}));
+app.get('/api/health',(_req,res)=>res.json({ok:true}));
+app.use('/api/auth',rateLimit({windowMs:15*60*1000,limit:30,standardHeaders:'draft-7',legacyHeaders:false}),authRoutes);
+app.use('/api/readings',auth,readingRoutes);
+app.use('/api/reports',auth,reportRoutes);
+app.use((err,_req,res,_next)=>{console.error(err);res.status(500).json({error:'Unexpected server error. Please try again.'});});

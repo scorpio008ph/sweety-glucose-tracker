@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { validateReading, reportRange, isValidDate } from '../src/utils/validation.js';
+const valid={date:'2026-10-15',slot:'After lunch',value:125};
+test('accepts valid reading',()=>assert.equal(validateReading(valid,'2026-10-15'),null));
+test('requires value',()=>assert.match(validateReading({...valid,value:''},'2026-10-15'),/Please enter/));
+test('rejects decimal and out-of-range values',()=>{for(const value of [39,601,120.5,'120']) assert.match(validateReading({...valid,value},'2026-10-15'),/whole number/);});
+test('rejects future dates',()=>assert.match(validateReading({...valid,date:'2026-10-16'},'2026-10-15'),/future/));
+test('rejects invalid calendar dates',()=>assert.equal(isValidDate('2026-02-30'),false));
+test('rejects unknown slot',()=>assert.match(validateReading({...valid,slot:'Bedtime'},'2026-10-15'),/slot/));
+test('daily report range',()=>assert.deepEqual(reportRange('daily','2026-10-15'),{start:'2026-10-15',end:'2026-10-15'}));
+test('month-to-date range',()=>assert.deepEqual(reportRange('mtd','2026-10-15'),{start:'2026-10-01',end:'2026-10-15'}));
+test('previous month across year boundary',()=>assert.deepEqual(reportRange('monthly','2026-01-15'),{start:'2025-12-01',end:'2025-12-31'}));
